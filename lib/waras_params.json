@@ -1,0 +1,8 @@
+{
+  "source": "colab/waras_fit.ipynb on Zenodo data",
+  "k": 0.977,
+  "b": -0.0642,
+  "tol": 7.92,
+  "delta": 0.0,
+  "minPassRatio": 0.9
+}
