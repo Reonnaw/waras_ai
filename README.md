@@ -25,13 +25,34 @@ pnpm test       # self-check logika squat
 
 ## "Training" di Google Colab (gratis)
 1. Buka https://colab.research.google.com → **File → Upload notebook** → pilih `colab/waras_fit.ipynb`.
-2. Unduh data skeleton dari Zenodo (link di bagian *Data Availability* artikel).
-3. **Runtime → Run all**. Di sel upload, pilih file CSV/ZIP Zenodo.
-4. Sel 2 (`load_clip`): sesuaikan nama kolom dengan isi CSV (lihat preview di sel 1). Ini satu-satunya bagian yang perlu diedit.
-5. Cek akurasi di sel validasi, lalu `waras_params.json` otomatis terunduh.
-6. Ganti `lib/waras_params.json` di repo dengan file itu.
+2. Unduh ZIP data skeleton dari Zenodo (link di bagian *Data Availability* artikel).
+3. **Runtime → Run all**. Di sel upload, pilih semua ZIP Zenodo (duplikat otomatis dibuang, label dibaca dari nama file).
+4. Cek angka di sel validasi, lalu `waras_params.json` otomatis terunduh.
+5. Ganti `lib/waras_params.json` di repo dengan file itu.
 
 Runtime CPU biasa cukup; tidak perlu GPU.
+
+## Akurasi
+Data Zenodo paper: 226 klip, 17 subjek (193 standar, 23 shallow, 10 good morning). Validasi **leave-one-subject-out**: tiap subjek diuji pakai parameter yang di-fit tanpa subjek itu.
+
+| Regresi `panggul = k·lutut + b` (per frame, squat standar) | Nilai |
+|---|---|
+| MAE | 4,06° |
+| MSE | 24,86 |
+| RMSE | 4,99° |
+| R² | 0,984 |
+| MAPE | 3,95% |
+
+| Klasifikasi per klip (positif = squat salah) | Nilai |
+|---|---|
+| Akurasi | **91,15%** (paper 91,67%) |
+| Precision | 67,57% |
+| Recall | 75,76% |
+| Specificity | 93,78% |
+| F1 | 71,43% |
+
+Benar per jenis: standar 93,8%, good morning 100%, shallow 65,2%.
+Kesalahan terkumpul di 3 subjek: p03 (shallow yang hampir sejajar), p09, dan p13 (klip "standar" yang di data terlihat dangkal).
 
 ## Hosting di Vercel (gratis, paket Hobby)
 1. Push repo ke GitHub.
@@ -42,4 +63,4 @@ Runtime CPU biasa cukup; tidak perlu GPU.
 Catatan: paket Hobby khusus penggunaan non-komersial (tugas, riset, portofolio aman).
 
 ## Tips pemakaian
-Kamera setinggi pinggang, badan **menyamping**, jarak 2–3 m, bahu sampai pergelangan kaki terlihat. Angka bawaan di `waras_params.json` diambil dari paper; `delta` dan `minPassRatio` masih tebakan sampai notebook dijalankan dengan data Zenodo.
+Kamera setinggi pinggang, badan **menyamping**, jarak 2–3 m, bahu sampai pergelangan kaki terlihat. Angka di `waras_params.json` hasil notebook dengan seluruh data Zenodo.
