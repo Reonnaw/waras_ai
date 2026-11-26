@@ -17,6 +17,11 @@ const MODEL =
 const KNEE_TARGET = 90;
 const HIP_TARGET = Math.round(params.k * KNEE_TARGET + params.b);
 
+// Live phase from the knee angle. 160° matches RepTracker's default `up`; "Dasar" is within 10° of parallel.
+type Phase = "Berdiri" | "Gerak" | "Dasar";
+const PHASES: Phase[] = ["Berdiri", "Gerak", "Dasar"];
+const phaseOf = (knee: number): Phase => (knee >= 160 ? "Berdiri" : knee <= KNEE_TARGET + 10 ? "Dasar" : "Gerak");
+
 async function createPose() {
   const vision = await FilesetResolver.forVisionTasks(WASM);
   const make = (delegate: "GPU" | "CPU") =>
@@ -208,6 +213,7 @@ export default function Home() {
                     <span className={live ? "text-ink" : ""}>{live ? "Pose terkunci" : "Mencari pose…"}</span>
                   </p>
                 )}
+                {running && live && <PhaseStrip phase={phaseOf(live.knee)} />}
 
                 {!running && (
                   <SetupOverlay loading={status === "loading"} error={status === "error" ? error : ""} onStart={start} />
@@ -511,5 +517,26 @@ function History({ history }: { history: boolean[] }) {
         })}
       </ol>
     </div>
+  );
+}
+
+function PhaseStrip({ phase }: { phase: Phase }) {
+  return (
+    <ol aria-label="Fase squat" className="absolute right-3 top-3 flex border border-line bg-canvas/80">
+      {PHASES.map((p) => {
+        const on = p === phase;
+        return (
+          <li
+            key={p}
+            aria-current={on ? "step" : undefined}
+            className={`border-line px-2 py-1 font-mono text-[11px] uppercase tracking-wider not-first:border-l ${
+              on ? (p === "Dasar" ? "bg-ok text-black" : "bg-ink text-canvas") : "text-mute"
+            }`}
+          >
+            {p}
+          </li>
+        );
+      })}
+    </ol>
   );
 }
