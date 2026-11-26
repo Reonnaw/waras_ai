@@ -103,3 +103,35 @@ export function WarasCatMascot({ status, size = 64 }: { status: MascotStatus; si
     </svg>
   );
 }
+
+// 12x11 head used as the brand mark. app/icon.svg is drawn from the same grid.
+const LOGO = [
+  "w..........w",
+  "ww........ww",
+  "wgw......wgw",
+  "wwwwwwwwwwww",
+  "wwwwwwwwwwww",
+  "wwaawwwwaaww",
+  "wwaawwwwaaww",
+  "wwwwwggwwwww",
+  "wwwwwwwwwwww",
+  ".wwwwwwwwww.",
+  "..wwwwwwww..",
+];
+
+export function WarasLogo({ size = 24 }: { size?: number }) {
+  return (
+    <svg
+      viewBox="0 -0.5 12 12"
+      width={size}
+      height={size}
+      shapeRendering="crispEdges"
+      aria-hidden
+      className="shrink-0"
+    >
+      {toRects(LOGO, "fill-ok").map((r) => (
+        <rect key={`${r.x}-${r.y}`} x={r.x} y={r.y} width={r.w} height={1} className={r.cls} />
+      ))}
+    </svg>
+  );
+}

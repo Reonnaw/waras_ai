@@ -5,7 +5,7 @@ import { DrawingUtils, FilesetResolver, PoseLandmarker } from "@mediapipe/tasks-
 import { Camera, CameraOff, FlipHorizontal2, RotateCcw, Volume2, VolumeX } from "lucide-react";
 import params from "@/lib/waras_params.json";
 import { evaluateRep, jointAngles, RepTracker, type Frame, type Verdict } from "@/lib/squat";
-import { WarasCatMascot, type MascotStatus } from "@/components/WarasCatMascot";
+import { WarasCatMascot, WarasLogo, type MascotStatus } from "@/components/WarasCatMascot";
 import { ThemeToggle } from "@/components/ThemeToggle";
 
 // WASM version must match the installed @mediapipe/tasks-vision version.
@@ -166,7 +166,8 @@ export default function Home() {
   return (
     <div className="mx-auto flex w-full max-w-[1400px] flex-1 flex-col lg:border-x lg:border-line">
       <header className="flex h-12 shrink-0 items-center justify-between gap-4 border-b border-line px-4">
-        <div className="flex min-w-0 items-baseline gap-2">
+        <div className="flex min-w-0 items-center gap-2.5">
+          <WarasLogo size={24} />
           <h1 className="text-[15px] font-extrabold tracking-[-0.02em]">WARAS</h1>
           <span className="text-mute" aria-hidden>
             /
