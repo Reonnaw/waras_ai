@@ -59,7 +59,7 @@ export default function Home() {
   const [status, setStatus] = useState<"idle" | "loading" | "running" | "error">("idle");
   const [error, setError] = useState("");
   const [live, setLive] = useState<Frame | null>(null);
-  const [reps, setReps] = useState({ total: 0, good: 0 });
+  const [history, setHistory] = useState<boolean[]>([]); // one entry per rep: passed or not
   const [last, setLast] = useState<Verdict | null>(null);
   const [mirror, setMirror] = useState(true);
   const [audio, setAudio] = useState(false);
@@ -112,7 +112,7 @@ export default function Home() {
           const v = evaluateRep(rep, params);
           if (cueRef.current) playCue(cueRef.current, v.ok);
           setLast(v);
-          setReps((r) => ({ total: r.total + 1, good: r.good + (v.ok ? 1 : 0) }));
+          setHistory((h) => [...h, v.ok]);
         }
       };
       loop();
@@ -152,11 +152,13 @@ export default function Home() {
 
   function reset() {
     trackerRef.current = new RepTracker();
-    setReps({ total: 0, good: 0 });
+    setHistory([]);
     setLast(null);
   }
 
   const running = status === "running";
+  const total = history.length;
+  const good = history.filter(Boolean).length;
   const mood: MascotStatus = !last ? "idle" : last.ok ? "good" : "warning";
   const flip = mirror ? "-scale-x-100" : "";
 
@@ -229,7 +231,7 @@ export default function Home() {
             </ControlButton>
             <ControlButton
               onClick={reset}
-              disabled={reps.total === 0 && !last}
+              disabled={total === 0}
               icon={<RotateCcw size={14} strokeWidth={1.5} />}
             >
               Reset
@@ -241,10 +243,10 @@ export default function Home() {
         <aside aria-label="Telemetri" className="flex flex-col bg-panel lg:border-l lg:border-line">
           <div className="grid grid-cols-2">
             <Metric label="Repetisi" className="border-b border-r">
-              <BigNumber>{reps.total}</BigNumber>
+              <BigNumber>{total}</BigNumber>
             </Metric>
             <Metric label="Benar" className="border-b">
-              <BigNumber className="text-ok">{reps.good}</BigNumber>
+              <BigNumber className="text-ok">{good}</BigNumber>
             </Metric>
             <Metric label="Sudut panggul" className="border-b border-r">
               <Angle value={live?.hip} target={HIP_TARGET} />
@@ -253,6 +255,8 @@ export default function Home() {
               <Angle value={live?.knee} target={KNEE_TARGET} />
             </Metric>
           </div>
+
+          <History history={history} />
 
           <section
             aria-live="polite"
@@ -264,8 +268,9 @@ export default function Home() {
             <div className="mb-3 flex items-center justify-between">
               <h2 className={LABEL}>Repetisi terakhir</h2>
               {last && (
-                <span className={`font-mono text-[11px] font-semibold uppercase tracking-wider ${last.ok ? "text-ok" : "text-warn"}`}>
-                  {last.ok ? "Valid" : "Perbaiki"}
+                <span className="font-mono text-[11px] uppercase tracking-wider tabular-nums">
+                  <span className="text-mute">#{String(total).padStart(2, "0")} · </span>
+                  <span className={`font-semibold ${last.ok ? "text-ok" : "text-warn"}`}>{last.ok ? "Valid" : "Perbaiki"}</span>
                 </span>
               )}
             </div>
@@ -464,5 +469,37 @@ function Angle({ value, target }: { value?: number; target: number }) {
         </div>
       </div>
     </>
+  );
+}
+
+const HISTORY_SLOTS = 12;
+
+// Last 12 reps as a strip of cells, oldest on the left.
+function History({ history }: { history: boolean[] }) {
+  const offset = Math.max(0, history.length - HISTORY_SLOTS);
+  const recent = history.slice(offset);
+  const rate = history.length ? Math.round((history.filter(Boolean).length / history.length) * 100) : null;
+  return (
+    <div className="border-b border-line p-4">
+      <div className="mb-3 flex items-baseline justify-between">
+        <h2 className={LABEL}>Riwayat {HISTORY_SLOTS} rep</h2>
+        <span className="font-mono text-[11px] uppercase tracking-wider text-mute tabular-nums">
+          Akurasi <span className="text-ink">{rate === null ? "—" : `${rate}%`}</span>
+        </span>
+      </div>
+      <ol className="grid grid-cols-12 gap-1">
+        {Array.from({ length: HISTORY_SLOTS }, (_, i) => {
+          const ok = recent[i];
+          return (
+            <li
+              key={i}
+              className={`h-3 ${ok === undefined ? "border border-line" : ok ? "bg-ok" : "bg-warn"}`}
+              aria-hidden={ok === undefined}
+              aria-label={ok === undefined ? undefined : `Rep ${offset + i + 1}: ${ok ? "valid" : "perbaiki"}`}
+            />
+          );
+        })}
+      </ol>
+    </div>
   );
 }
