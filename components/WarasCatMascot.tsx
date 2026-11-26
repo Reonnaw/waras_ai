@@ -61,8 +61,9 @@ const SPRITES: Record<MascotStatus, string[]> = {
   ],
 };
 
-const ACCENT: Record<MascotStatus, string> = { idle: "#737373", good: "#22C55E", warning: "#EAB308" };
-const BASE: Record<string, string> = { w: "#EDEDED", g: "#737373", d: "#262626", k: "#0A0A0A" };
+// Theme tokens, so the cat is white on dark and black on light.
+const ACCENT: Record<MascotStatus, string> = { idle: "fill-mute", good: "fill-ok", warning: "fill-warn" };
+const BASE: Record<string, string> = { w: "fill-ink", g: "fill-mute", d: "fill-line", k: "fill-canvas" };
 const LABEL: Record<MascotStatus, string> = {
   idle: "Kucing WARAS menunggu",
   good: "Kucing WARAS senang: squat benar",
@@ -71,13 +72,13 @@ const LABEL: Record<MascotStatus, string> = {
 
 // Merge horizontal runs of one color into a single rect so the SVG stays small.
 function toRects(rows: string[], accent: string) {
-  const rects: { x: number; y: number; w: number; fill: string }[] = [];
+  const rects: { x: number; y: number; w: number; cls: string }[] = [];
   rows.forEach((row, y) => {
     for (let x = 0; x < row.length; ) {
       const c = row[x];
       let end = x + 1;
       while (row[end] === c) end++;
-      if (c !== ".") rects.push({ x, y, w: end - x, fill: c === "a" ? accent : BASE[c] });
+      if (c !== ".") rects.push({ x, y, w: end - x, cls: c === "a" ? accent : BASE[c] });
       x = end;
     }
   });
@@ -97,7 +98,7 @@ export function WarasCatMascot({ status, size = 64 }: { status: MascotStatus; si
       className="shrink-0"
     >
       {toRects(SPRITES[status], ACCENT[status]).map((r) => (
-        <rect key={`${r.x}-${r.y}`} x={r.x} y={r.y} width={r.w} height={1} fill={r.fill} />
+        <rect key={`${r.x}-${r.y}`} x={r.x} y={r.y} width={r.w} height={1} className={r.cls} />
       ))}
     </svg>
   );

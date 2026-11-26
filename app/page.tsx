@@ -6,6 +6,7 @@ import { Camera, CameraOff, FlipHorizontal2, RotateCcw, Volume2, VolumeX } from 
 import params from "@/lib/waras_params.json";
 import { evaluateRep, jointAngles, RepTracker, type Frame, type Verdict } from "@/lib/squat";
 import { WarasCatMascot, type MascotStatus } from "@/components/WarasCatMascot";
+import { ThemeToggle } from "@/components/ThemeToggle";
 
 // WASM version must match the installed @mediapipe/tasks-vision version.
 const WASM = "https://cdn.jsdelivr.net/npm/@mediapipe/tasks-vision@0.10.21/wasm";
@@ -174,68 +175,76 @@ export default function Home() {
             Wawasan Analisis Raga dan Sikap<span className="hidden md:inline">: korektor squat real-time</span>
           </p>
         </div>
-        <p className={`${LABEL} hidden shrink-0 items-center gap-2 border border-line px-2 py-1 sm:flex`}>
-          <span className="size-1.5 bg-ok" aria-hidden />
-          On-device vision • No server upload
-        </p>
+        <div className="flex shrink-0 items-center gap-2">
+          <p className={`${LABEL} hidden h-8 items-center gap-2 border border-line px-2 sm:flex`}>
+            <span className="size-1.5 bg-ok" aria-hidden />
+            On-device vision • No server upload
+          </p>
+          <ThemeToggle />
+        </div>
       </header>
 
       <main className="grid flex-1 grid-rows-[auto_1fr] lg:grid-rows-1 lg:grid-cols-[minmax(0,68fr)_minmax(0,32fr)]">
         {/* Optical viewport */}
         <section aria-label="Kamera" className="p-3 sm:p-5">
-          <div className="relative aspect-[4/3] w-full border border-line bg-well md:aspect-video">
+          <div className="relative">
             <Reticle />
-            {/* Mirrored like a selfie by default; angles are unaffected by the flip. */}
-            <video
-              ref={videoRef}
-              playsInline
-              muted
-              className={`absolute inset-0 h-full w-full object-contain ${flip}`}
-            />
-            <canvas ref={canvasRef} className={`absolute inset-0 h-full w-full object-contain ${flip}`} />
+            <div className="relative aspect-[4/3] w-full border border-line md:aspect-video">
+              {/* The screen stays dark in both themes so the video and overlay read like a monitor. */}
+              <div data-theme="dark" className="absolute inset-0 overflow-hidden bg-well text-ink">
+                {/* Mirrored like a selfie by default; angles are unaffected by the flip. */}
+                <video
+                  ref={videoRef}
+                  playsInline
+                  muted
+                  className={`absolute inset-0 h-full w-full object-contain ${flip}`}
+                />
+                <canvas ref={canvasRef} className={`absolute inset-0 h-full w-full object-contain ${flip}`} />
 
-            {running && (
-              <p className={`${LABEL} absolute left-3 top-3 flex items-center gap-2 bg-canvas/80 px-2 py-1`}>
-                <span className={`size-1.5 ${live ? "bg-ok" : "bg-line-strong"}`} aria-hidden />
-                <span className={live ? "text-ink" : ""}>{live ? "Pose terkunci" : "Mencari pose…"}</span>
-              </p>
-            )}
+                {running && (
+                  <p className={`${LABEL} absolute left-3 top-3 flex items-center gap-2 bg-canvas/80 px-2 py-1`}>
+                    <span className={`size-1.5 ${live ? "bg-ok" : "bg-line-strong"}`} aria-hidden />
+                    <span className={live ? "text-ink" : ""}>{live ? "Pose terkunci" : "Mencari pose…"}</span>
+                  </p>
+                )}
 
-            {!running && (
-              <SetupOverlay loading={status === "loading"} error={status === "error" ? error : ""} onStart={start} />
-            )}
-          </div>
+                {!running && (
+                  <SetupOverlay loading={status === "loading"} error={status === "error" ? error : ""} onStart={start} />
+                )}
+              </div>
+            </div>
 
-          {/* Control bar, flush under the viewport */}
-          <div className="grid auto-rows-[44px] grid-cols-2 gap-px border-x border-b border-line bg-line sm:grid-cols-4">
-            <ControlButton
-              onClick={running ? stop : start}
-              disabled={status === "loading"}
-              icon={running ? <CameraOff size={14} strokeWidth={1.5} /> : <Camera size={14} strokeWidth={1.5} />}
-            >
-              {running ? "Hentikan kamera" : status === "loading" ? "Memuat…" : "Mulai kamera"}
-            </ControlButton>
-            <ControlButton
-              onClick={() => setMirror((m) => !m)}
-              pressed={mirror}
-              icon={<FlipHorizontal2 size={14} strokeWidth={1.5} />}
-            >
-              Mirror
-            </ControlButton>
-            <ControlButton
-              onClick={toggleAudio}
-              pressed={audio}
-              icon={audio ? <Volume2 size={14} strokeWidth={1.5} /> : <VolumeX size={14} strokeWidth={1.5} />}
-            >
-              Audio cue
-            </ControlButton>
-            <ControlButton
-              onClick={reset}
-              disabled={total === 0}
-              icon={<RotateCcw size={14} strokeWidth={1.5} />}
-            >
-              Reset
-            </ControlButton>
+            {/* Control bar, flush under the viewport */}
+            <div className="grid auto-rows-[44px] grid-cols-2 gap-px border-x border-b border-line bg-line sm:grid-cols-4">
+              <ControlButton
+                onClick={running ? stop : start}
+                disabled={status === "loading"}
+                icon={running ? <CameraOff size={14} strokeWidth={1.5} /> : <Camera size={14} strokeWidth={1.5} />}
+              >
+                {running ? "Hentikan kamera" : status === "loading" ? "Memuat…" : "Mulai kamera"}
+              </ControlButton>
+              <ControlButton
+                onClick={() => setMirror((m) => !m)}
+                pressed={mirror}
+                icon={<FlipHorizontal2 size={14} strokeWidth={1.5} />}
+              >
+                Mirror
+              </ControlButton>
+              <ControlButton
+                onClick={toggleAudio}
+                pressed={audio}
+                icon={audio ? <Volume2 size={14} strokeWidth={1.5} /> : <VolumeX size={14} strokeWidth={1.5} />}
+              >
+                Audio cue
+              </ControlButton>
+              <ControlButton
+                onClick={reset}
+                disabled={total === 0}
+                icon={<RotateCcw size={14} strokeWidth={1.5} />}
+              >
+                Reset
+              </ControlButton>
+            </div>
           </div>
         </section>
 
@@ -308,10 +317,10 @@ function Reticle() {
   const tick = "pointer-events-none absolute size-3 border-ink";
   return (
     <div aria-hidden className="pointer-events-none absolute inset-0 z-10">
-      <span className={`${tick} -left-px -top-px border-l border-t`} />
-      <span className={`${tick} -right-px -top-px border-r border-t`} />
-      <span className={`${tick} -bottom-px -left-px border-b border-l`} />
-      <span className={`${tick} -bottom-px -right-px border-b border-r`} />
+      <span className={`${tick} -left-[5px] -top-[5px] border-l border-t`} />
+      <span className={`${tick} -right-[5px] -top-[5px] border-r border-t`} />
+      <span className={`${tick} -bottom-[5px] -left-[5px] border-b border-l`} />
+      <span className={`${tick} -bottom-[5px] -right-[5px] border-b border-r`} />
     </div>
   );
 }

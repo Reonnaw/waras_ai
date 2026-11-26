@@ -1,34 +1,60 @@
 @import "tailwindcss";
 
+/* `dark:` follows the data-theme attribute set by the inline script in layout.tsx, not the OS setting. */
+@custom-variant dark (&:where([data-theme="dark"], [data-theme="dark"] *));
+
+/* Light: pale instrument chassis. Text colors checked for WCAG AA against canvas and panel. */
+:root,
+[data-theme="light"] {
+  --canvas: #f4f4f3;
+  --panel: #ffffff;
+  --line: #d9d9d6;
+  --line-strong: #a3a3a0;
+  --ink: #171717;
+  --mute: #6b6b6b;
+  --ok: #15803d;
+  --warn: #8a5a00;
+  color-scheme: light;
+}
+
+/* Dark. Also forced on the camera viewport so the video always sits on a black screen. */
+[data-theme="dark"] {
+  --canvas: #0a0a0a;
+  --panel: #121212;
+  --line: #262626;
+  --line-strong: #404040;
+  --ink: #ededed;
+  --mute: #858585;
+  --ok: #22c55e;
+  --warn: #eab308;
+  color-scheme: dark;
+}
+
 @theme inline {
-  --color-canvas: #0a0a0a;
-  --color-panel: #121212;
+  --color-canvas: var(--canvas);
+  --color-panel: var(--panel);
   --color-well: #050505;
-  --color-line: #262626;
-  --color-line-strong: #404040;
-  --color-ink: #ededed;
-  --color-mute: #737373;
-  --color-ok: #22c55e;
-  --color-warn: #eab308;
+  --color-line: var(--line);
+  --color-line-strong: var(--line-strong);
+  --color-ink: var(--ink);
+  --color-mute: var(--mute);
+  --color-ok: var(--ok);
+  --color-warn: var(--warn);
   --font-sans: var(--font-jakarta);
   --font-mono: var(--font-jetbrains);
 }
 
-:root {
-  color-scheme: dark;
-}
-
 body {
-  background: var(--color-canvas);
-  color: var(--color-ink);
+  background: var(--canvas);
+  color: var(--ink);
 }
 
 ::selection {
-  background: var(--color-ok);
+  background: var(--ok);
   color: #000;
 }
 
 :focus-visible {
-  outline: 1px solid var(--color-ink);
+  outline: 1px solid var(--ink);
   outline-offset: 2px;
 }
