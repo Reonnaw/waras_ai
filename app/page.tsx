@@ -190,7 +190,7 @@ export default function Home() {
         </div>
       </header>
 
-      <main className="grid flex-1 grid-rows-[auto_1fr] lg:grid-rows-1 lg:grid-cols-[minmax(0,68fr)_minmax(0,32fr)]">
+      <main className="grid flex-1 content-start lg:grid-cols-[minmax(0,68fr)_minmax(0,32fr)] lg:grid-rows-[auto_1fr] lg:content-stretch">
         {/* Optical viewport */}
         <section aria-label="Kamera" className="p-3 sm:p-5">
           <div className="relative">
@@ -256,7 +256,11 @@ export default function Home() {
         </section>
 
         {/* Telemetry column */}
-        <aside aria-label="Telemetri" className="flex flex-col bg-panel lg:border-l lg:border-line">
+        {/* Phones: camera, telemetry, then method. Desktop: method sits under the camera, telemetry spans both rows. */}
+        <aside
+          aria-label="Telemetri"
+          className="flex flex-col bg-panel lg:col-start-2 lg:row-span-2 lg:row-start-1 lg:border-l lg:border-line"
+        >
           <div className="grid grid-cols-2">
             <Metric label="Repetisi" className="border-b border-r">
               <BigNumber>{total}</BigNumber>
@@ -315,6 +319,8 @@ export default function Home() {
             Video diproses di perangkatmu dan tidak dikirim ke server. Metode: Yao et al. (2026), Computers 15(5):293.
           </footer>
         </aside>
+
+        <MethodPanel />
       </main>
     </div>
   );
@@ -538,5 +544,52 @@ function PhaseStrip({ phase }: { phase: Phase }) {
         );
       })}
     </ol>
+  );
+}
+
+const fmt = (n: number, digits: number) => n.toFixed(digits).replace(".", ",");
+
+// What the app actually checks, with the live fitted numbers, so the verdict is never a black box.
+const RULES = [
+  {
+    title: "Koordinasi",
+    body: "Sudut panggul harus mengikuti sudut lutut sepanjang gerakan.",
+    formula: `|panggul − (${fmt(params.k, 2)}·lutut + ${fmt(params.b, 2)})| ≤ ${fmt(params.tol, 1)}° · ≥${Math.round(params.minPassRatio * 100)}% frame`,
+  },
+  {
+    title: "Kedalaman",
+    body: "Di titik terendah, panggul tidak boleh lebih tinggi dari lutut.",
+    formula: `toleransi ${fmt(params.delta * 100, 1)}% panjang paha`,
+  },
+  {
+    title: "Hitungan",
+    body: "Satu repetisi dihitung saat lutut menekuk lalu lurus kembali.",
+    formula: "mulai < 160° · wajib < 145° · selesai ≥ 160°",
+  },
+];
+
+function MethodPanel() {
+  return (
+    <section aria-label="Cara penilaian" className="border-t border-line px-3 py-5 sm:px-5 lg:col-start-1 lg:border-t-0 lg:pt-0">
+      <div className="mb-2 flex items-baseline justify-between gap-4">
+        <h2 className={LABEL}>Cara penilaian</h2>
+        {/* Leave-one-subject-out result on the paper's Zenodo data; see README "Akurasi". */}
+        <p className="font-mono text-[11px] uppercase tracking-wider text-mute tabular-nums">
+          Akurasi uji <span className="text-ink">91,15%</span> · LOSO
+        </p>
+      </div>
+      <ol className="grid gap-px border border-line bg-line sm:grid-cols-3">
+        {RULES.map((r, i) => (
+          <li key={r.title} className="flex flex-col gap-2 bg-panel p-4">
+            <p className="flex items-baseline gap-2">
+              <span className="font-mono text-[11px] text-mute tabular-nums">{String(i + 1).padStart(2, "0")}</span>
+              <span className="text-sm font-semibold tracking-[-0.01em]">{r.title}</span>
+            </p>
+            <p className="text-[13px] leading-relaxed text-mute">{r.body}</p>
+            <p className="mt-auto border-t border-line pt-2 font-mono text-[11px] text-ink tabular-nums">{r.formula}</p>
+          </li>
+        ))}
+      </ol>
+    </section>
   );
 }
