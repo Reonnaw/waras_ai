@@ -2,7 +2,7 @@
 
 import { useEffect, useRef, useState, type ReactNode } from "react";
 import { DrawingUtils, FilesetResolver, PoseLandmarker } from "@mediapipe/tasks-vision";
-import { Camera, CameraOff, FlipHorizontal2 } from "lucide-react";
+import { Camera, CameraOff, FlipHorizontal2, RotateCcw, Volume2, VolumeX } from "lucide-react";
 import params from "@/lib/waras_params.json";
 import { evaluateRep, jointAngles, RepTracker, type Frame, type Verdict } from "@/lib/squat";
 import { WarasCatMascot, type MascotStatus } from "@/components/WarasCatMascot";
@@ -31,20 +31,46 @@ async function createPose() {
   }
 }
 
+// Square-wave blips you can hear from 3 m away: rising pair = valid rep, one low buzz = needs correction.
+function playCue(ac: AudioContext, ok: boolean) {
+  (ok ? [660, 990] : [220]).forEach((freq, i) => {
+    const t = ac.currentTime + i * 0.12;
+    const osc = ac.createOscillator();
+    const gain = ac.createGain();
+    osc.type = "square";
+    osc.frequency.value = freq;
+    gain.gain.setValueAtTime(0.05, t);
+    gain.gain.exponentialRampToValueAtTime(0.0001, t + (ok ? 0.1 : 0.3));
+    osc.connect(gain).connect(ac.destination);
+    osc.start(t);
+    osc.stop(t + 0.3);
+  });
+}
+
 const LABEL = "font-mono text-[11px] uppercase tracking-wider text-mute";
 
 export default function Home() {
   const videoRef = useRef<HTMLVideoElement>(null);
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const stopRef = useRef<() => void>(undefined);
+  // Refs so the frame loop (created once in start) always sees the latest tracker and audio setting.
+  const trackerRef = useRef(new RepTracker());
+  const cueRef = useRef<AudioContext | null>(null);
   const [status, setStatus] = useState<"idle" | "loading" | "running" | "error">("idle");
   const [error, setError] = useState("");
   const [live, setLive] = useState<Frame | null>(null);
   const [reps, setReps] = useState({ total: 0, good: 0 });
   const [last, setLast] = useState<Verdict | null>(null);
   const [mirror, setMirror] = useState(true);
+  const [audio, setAudio] = useState(false);
 
-  useEffect(() => () => stopRef.current?.(), []);
+  useEffect(
+    () => () => {
+      stopRef.current?.();
+      cueRef.current?.close();
+    },
+    [],
+  );
 
   async function start() {
     setStatus("loading");
@@ -63,7 +89,6 @@ export default function Home() {
       const canvas = canvasRef.current!;
       const ctx = canvas.getContext("2d")!;
       const draw = new DrawingUtils(ctx);
-      const tracker = new RepTracker();
       let raf = 0;
       let lastTime = -1;
 
@@ -82,9 +107,10 @@ export default function Home() {
         draw.drawLandmarks(lm, { color: "#EDEDED", fillColor: "#0A0A0A", lineWidth: 2, radius: 3 });
         const f = jointAngles(lm, video.videoWidth / video.videoHeight);
         setLive(f);
-        const rep = f && tracker.push(f);
+        const rep = f && trackerRef.current.push(f);
         if (rep) {
           const v = evaluateRep(rep, params);
+          if (cueRef.current) playCue(cueRef.current, v.ok);
           setLast(v);
           setReps((r) => ({ total: r.total + 1, good: r.good + (v.ok ? 1 : 0) }));
         }
@@ -109,6 +135,25 @@ export default function Home() {
     stopRef.current = undefined;
     setStatus("idle");
     setLive(null);
+  }
+
+  function toggleAudio() {
+    if (cueRef.current) {
+      cueRef.current.close();
+      cueRef.current = null;
+      setAudio(false);
+    } else {
+      // Created inside the click so browsers allow it to play.
+      cueRef.current = new AudioContext();
+      playCue(cueRef.current, true);
+      setAudio(true);
+    }
+  }
+
+  function reset() {
+    trackerRef.current = new RepTracker();
+    setReps({ total: 0, good: 0 });
+    setLast(null);
   }
 
   const running = status === "running";
@@ -160,7 +205,7 @@ export default function Home() {
           </div>
 
           {/* Control bar, flush under the viewport */}
-          <div className="grid h-11 grid-cols-2 divide-x divide-line border-x border-b border-line bg-panel">
+          <div className="grid auto-rows-[44px] grid-cols-2 gap-px border-x border-b border-line bg-line sm:grid-cols-4">
             <ControlButton
               onClick={running ? stop : start}
               disabled={status === "loading"}
@@ -174,6 +219,20 @@ export default function Home() {
               icon={<FlipHorizontal2 size={14} strokeWidth={1.5} />}
             >
               Mirror
+            </ControlButton>
+            <ControlButton
+              onClick={toggleAudio}
+              pressed={audio}
+              icon={audio ? <Volume2 size={14} strokeWidth={1.5} /> : <VolumeX size={14} strokeWidth={1.5} />}
+            >
+              Audio cue
+            </ControlButton>
+            <ControlButton
+              onClick={reset}
+              disabled={reps.total === 0 && !last}
+              icon={<RotateCcw size={14} strokeWidth={1.5} />}
+            >
+              Reset
             </ControlButton>
           </div>
         </section>
@@ -359,7 +418,7 @@ function ControlButton({
       onClick={onClick}
       disabled={disabled}
       aria-pressed={pressed}
-      className="flex min-w-0 items-center justify-center gap-2 px-2 font-mono text-[11px] uppercase tracking-wider text-ink hover:bg-line disabled:cursor-wait disabled:text-mute"
+      className="flex min-w-0 items-center justify-center gap-2 bg-panel px-2 font-mono text-[11px] uppercase tracking-wider text-ink hover:bg-line disabled:cursor-not-allowed disabled:text-mute disabled:hover:bg-panel"
     >
       {pressed !== undefined && (
         <span className={`size-1.5 shrink-0 ${pressed ? "bg-ok" : "bg-line-strong"}`} aria-hidden />
