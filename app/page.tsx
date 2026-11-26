@@ -197,7 +197,10 @@ export default function Home() {
             <Reticle />
             <div className="relative aspect-[4/3] w-full border border-line md:aspect-video">
               {/* The screen stays dark in both themes so the video and overlay read like a monitor. */}
-              <div data-theme="dark" className="absolute inset-0 overflow-hidden bg-well text-ink">
+              <div
+                data-theme="dark"
+                className="absolute inset-0 overflow-hidden bg-well bg-[radial-gradient(#1f1f1f_1px,transparent_1px)] bg-size-[24px_24px] text-ink"
+              >
                 {/* Mirrored like a selfie by default; angles are unaffected by the flip. */}
                 <video
                   ref={videoRef}
@@ -365,7 +368,7 @@ function SetupOverlay({ loading, error, onStart }: { loading: boolean; error: st
         <button
           onClick={onStart}
           disabled={loading}
-          className="self-start bg-ok px-5 py-2.5 font-mono text-xs font-semibold uppercase tracking-wider text-black hover:bg-ink disabled:cursor-wait disabled:opacity-60"
+          className="self-start bg-ok px-5 py-2.5 font-mono text-xs font-semibold uppercase tracking-wider text-black hover:bg-ink active:translate-y-px disabled:cursor-wait disabled:opacity-60"
         >
           {loading ? "Memuat model…" : "Mulai kamera"}
         </button>
@@ -445,7 +448,7 @@ function ControlButton({
       onClick={onClick}
       disabled={disabled}
       aria-pressed={pressed}
-      className="flex min-w-0 items-center justify-center gap-2 bg-panel px-2 font-mono text-[11px] uppercase tracking-wider text-ink hover:bg-line disabled:cursor-not-allowed disabled:text-mute disabled:hover:bg-panel"
+      className="flex min-w-0 items-center justify-center gap-2 bg-panel px-2 font-mono text-[11px] uppercase tracking-wider text-ink hover:bg-line active:translate-y-px disabled:cursor-not-allowed disabled:text-mute disabled:hover:bg-panel disabled:active:translate-y-0"
     >
       {pressed !== undefined && (
         <span className={`size-1.5 shrink-0 ${pressed ? "bg-ok" : "bg-line-strong"}`} aria-hidden />

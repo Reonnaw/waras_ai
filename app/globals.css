@@ -54,6 +54,27 @@ body {
   color: #000;
 }
 
+/* Idle mascot blinks: pupils flash to fur color for a moment every 4 s. */
+@keyframes waras-blink {
+  0%,
+  93%,
+  100% {
+    fill: var(--canvas);
+  }
+  95%,
+  97% {
+    fill: var(--ink);
+  }
+}
+.waras-blink {
+  animation: waras-blink 4s steps(1) infinite;
+}
+@media (prefers-reduced-motion: reduce) {
+  .waras-blink {
+    animation: none;
+  }
+}
+
 :focus-visible {
   outline: 1px solid var(--ink);
   outline-offset: 2px;

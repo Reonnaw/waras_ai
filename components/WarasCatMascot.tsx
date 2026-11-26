@@ -98,7 +98,14 @@ export function WarasCatMascot({ status, size = 64 }: { status: MascotStatus; si
       className="shrink-0"
     >
       {toRects(SPRITES[status], ACCENT[status]).map((r) => (
-        <rect key={`${r.x}-${r.y}`} x={r.x} y={r.y} width={r.w} height={1} className={r.cls} />
+        <rect
+          key={`${r.x}-${r.y}`}
+          x={r.x}
+          y={r.y}
+          width={r.w}
+          height={1}
+          className={status === "idle" && r.cls === BASE.k ? `${r.cls} waras-blink` : r.cls}
+        />
       ))}
     </svg>
   );
