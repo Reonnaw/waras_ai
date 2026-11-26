@@ -159,7 +159,7 @@ export default function Home() {
             </button>
           )}
           <p className="text-xs opacity-60">
-            Video diproses di perangkatmu dan tidak dikirim ke server. Metode: Chen et al. (2026), Computers 15(5):293.
+            Video diproses di perangkatmu dan tidak dikirim ke server. Metode: Yao et al. (2026), Computers 15(5):293.
           </p>
         </aside>
       </div>

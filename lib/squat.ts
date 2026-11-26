@@ -1,4 +1,4 @@
-// Squat rules from Chen et al. (2026), Computers 15(5):293, doi:10.3390/computers15050293.
+// Squat rules from Yao et al. (2026), Computers 15(5):293, doi:10.3390/computers15050293.
 // Keep the angle math identical to colab/waras_fit.ipynb so fitted params stay valid.
 
 export type Pt = { x: number; y: number; visibility?: number };

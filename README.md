@@ -1,7 +1,7 @@
 # WARAS AI
 
 **W**awasan **A**nalisis **R**aga dan **S**ikap: pelatih kebugaran virtual yang mengoreksi squat secara real-time dari kamera.
-Metode: Chen et al. (2026), *Non-Standard Squat Posture Detection Method Using Human Skeleton*, Computers 15(5):293, doi:10.3390/computers15050293.
+Metode: Yao et al. (2026), *Non-Standard Squat Posture Detection Method Using Human Skeleton*, Computers 15(5):293, doi:10.3390/computers15050293.
 
 Cara kerjanya: MediaPipe Pose jalan **di browser** → sudut panggul & lutut (hukum cosinus) → 2 cek per repetisi:
 1. koordinasi: `|panggul − (k·lutut + b)| ≤ tol` (regresi linear, toleransi 3σ maks 15°)

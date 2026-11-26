@@ -1,0 +1,151 @@
+WARAS AI - LAPORAN METRIK AKURASI
+=================================
+Wawasan Analisis Raga dan Sikap: koreksi postur squat real-time dari kamera.
+Metode: Yao et al. (2026), Non-Standard Squat Posture Detection Method Using
+Human Skeleton, Computers 15(5):293, doi:10.3390/computers15050293.
+Sumber angka: colab/waras_fit.ipynb, dijalankan dengan seluruh data Zenodo.
+
+
+1. DATASET
+----------
+Sumber          : data skeleton MediaPipe dari Zenodo (lampiran paper)
+Jumlah subjek   : 17 orang
+Jumlah klip     : 226 klip, 1 klip = 1 repetisi squat
+  - Standar       : 193 klip
+  - Shallow       :  23 klip (kurang dalam)
+  - Good morning  :  10 klip (badan terlalu membungkuk)
+Jumlah frame    : 18.302 frame (15.470 frame squat standar dipakai untuk regresi)
+
+
+2. CARA KERJA MODEL
+-------------------
+Model ini bukan deep learning, melainkan aturan berbasis regresi linear:
+  a. Sudut panggul dan lutut dihitung dari titik bahu, panggul, lutut, dan
+     pergelangan kaki dengan hukum cosinus.
+  b. Cek koordinasi : sudut_panggul ~ k x sudut_lutut + b
+                      Minimal 90% frame harus berada dalam toleransi +/- tol derajat.
+  c. Cek kedalaman  : di titik terendah, panggul tidak boleh lebih tinggi dari
+                      lutut lebih dari delta x panjang paha.
+
+Parameter final (lib/waras_params.json):
+  k            = 0,9549
+  b            = 0,0923
+  tol          = 14,28 derajat
+  delta        = 0,033
+  minPassRatio = 0,90
+
+
+3. METODE VALIDASI
+------------------
+Leave-One-Subject-Out (LOSO) cross-validation:
+setiap subjek diuji memakai parameter yang di-fit TANPA data subjek tersebut,
+lalu diulang untuk ke-17 subjek. Dengan cara ini, model selalu diuji pada orang
+yang belum pernah ia lihat.
+
+
+4. METRIK REGRESI (prediksi sudut panggul dari sudut lutut)
+-----------------------------------------------------------
+Dihitung per frame pada squat standar, satuan derajat (deg).
+Rata-rata sudut panggul sebenarnya = 121,72 deg.
+
+  Metrik                                  Nilai      Arti
+  --------------------------------------  ---------  ------------------------------------
+  MAE  (Mean Absolute Error)              4,06 deg   rata-rata meleset 4 derajat
+  MSE  (Mean Squared Error)               24,86      kuadrat galat rata-rata (deg^2)
+  RMSE (Root Mean Squared Error)          4,99 deg   galat tipikal sekitar 5 derajat
+  R^2  (koefisien determinasi)            0,9844     98,4% variasi sudut terjelaskan
+  MAPE (Mean Absolute Percentage Error)   3,95%      rata-rata meleset 3,95%
+  Relative MAE (MAE / rata-rata aktual)   3,33%
+  RAE  (Relative Absolute Error)          0,1184     model ~8x lebih baik dari tebak rata-rata
+  RRSE (Root Relative Squared Error)      0,1248
+  Median Absolute Error                   3,55 deg
+  Galat maksimum                          15,09 deg
+  Bias (rata-rata galat)                  0,07 deg   hampir tidak bias
+
+Catatan: "RMAE" bukan istilah baku. Kalau yang dimaksud galat relatif, padanannya
+adalah Relative MAE, RAE, dan RRSE di atas.
+
+
+5. METRIK KLASIFIKASI (squat benar vs salah, per klip)
+------------------------------------------------------
+Kelas positif = squat SALAH (yang harus ditegur oleh aplikasi).
+
+  Metrik                  Nilai     Paper (Yao et al.)
+  ----------------------  --------  -------------------
+  Akurasi                 91,15%    91,67%
+  Balanced accuracy       84,77%
+  Precision               67,57%
+  Recall (sensitivity)    75,76%
+  Specificity             93,78%
+  F1-score                71,43%
+
+Confusion matrix (226 klip):
+
+                          Prediksi: SALAH   Prediksi: STANDAR
+  Aktual: SALAH (33)        TP = 25            FN =   8
+  Aktual: STANDAR (193)     FP = 12            TN = 181
+
+Benar per jenis squat:
+  Standar        181 / 193   = 93,8%
+  Good morning    10 /  10   = 100,0%
+  Shallow         15 /  23   = 65,2%
+
+
+6. ANALISIS KESALAHAN
+---------------------
+Ke-20 kesalahan hanya berasal dari 3 subjek:
+  - p03 : 8 klip shallow lolos sebagai standar (squatnya hampir sejajar, borderline)
+  - p09 : 6 klip standar ditegur
+  - p13 : 6 klip standar ditegur (di data, squatnya memang terlihat dangkal; dugaan label keliru)
+Subjek lain: 100% benar.
+
+
+7. SEBELUM vs SESUDAH PERBAIKAN
+-------------------------------
+Perbaikan: label dibaca dari nama file (sebelumnya 193 klip standar terlabel
+salah), duplikat antar-ZIP dibuang, sisi badan dipilih per frame berdasarkan
+visibility (sama dengan aplikasi web).
+
+  Metrik                        Sebelum    Sesudah
+  ----------------------------  ---------  ---------
+  Akurasi                       54,41%     91,15%
+  Squat standar dinilai benar   28,6%      93,8%
+  Precision                     51,92%     67,57%
+  Recall                        81,82%     75,76%
+  Specificity                   28,57%     93,78%
+  F1-score                      63,53%     71,43%
+  MAE                           4,97 deg   4,06 deg
+  MSE                           32,21      24,86
+  RMSE                          5,68 deg   4,99 deg
+  R^2                           0,9811     0,9844
+  MAPE                          5,33%      3,95%
+("Sebelum" diukur dengan split lama 80/20 per subjek, 3 subjek validasi.)
+
+
+8. BATASAN
+----------
+- Data shallow hanya dari 4 subjek dan good morning dari 1 subjek, jadi angka
+  per jenis itu masih bisa bergeser bila datanya bertambah.
+- Rasio aspek video asli dataset tidak diketahui (dihitung dengan ASPECT = 1).
+  Aplikasi web memakai rasio aspek kamera sungguhan, sehingga akurasi di
+  lapangan bisa sedikit berbeda.
+- Angka di atas belum diuji ulang pada rekaman kamera baru di luar dataset.
+
+
+LAMPIRAN: RUMUS
+---------------
+  y = sudut panggul aktual, y^ = k*x + b (prediksi), n = jumlah frame
+
+  MAE   = (1/n) * SUM |y - y^|
+  MSE   = (1/n) * SUM (y - y^)^2
+  RMSE  = sqrt(MSE)
+  R^2   = 1 - SUM (y - y^)^2 / SUM (y - mean(y))^2
+  MAPE  = (100%/n) * SUM |y - y^| / y
+  RAE   = SUM |y - y^| / SUM |y - mean(y)|
+  RRSE  = sqrt( SUM (y - y^)^2 / SUM (y - mean(y))^2 )
+
+  Akurasi     = (TP + TN) / (TP + TN + FP + FN)
+  Precision   = TP / (TP + FP)
+  Recall      = TP / (TP + FN)
+  Specificity = TN / (TN + FP)
+  F1          = 2 * Precision * Recall / (Precision + Recall)
