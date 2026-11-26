@@ -13,7 +13,8 @@ Tidak ada server ML dan tidak ada GPU, jadi semuanya gratis.
 |---|---|
 | `lib/squat.ts` | rumus sudut, deteksi repetisi, evaluasi (inti logika) |
 | `lib/waras_params.json` | angka hasil fitting Colab (`k, b, tol, delta, minPassRatio`) |
-| `app/page.tsx` | halaman kamera + feedback |
+| `app/page.tsx` | halaman kamera, panel telemetri, kontrol (kamera, mirror, audio cue, reset) |
+| `components/WarasCatMascot.tsx` | maskot kucing pixel-art 16x16, pose `idle` / `good` / `warning` |
 | `colab/waras_fit.ipynb` | fitting parameter dari data Zenodo paper |
 
 ## Jalankan lokal
